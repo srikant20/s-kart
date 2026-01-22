@@ -17,11 +17,6 @@ public class CategoryController {
     @Autowired
     private CategoryService categoryService;
 
-    // Use @Autowired annotation or create constructor both are same
-//    public CategoryController(CategoryService categoryService) {
-//        this.categoryService = categoryService;
-//    }
-
     @GetMapping("/public/categories")
     public ResponseEntity<List<Category>> getAllCategories(){
         return new ResponseEntity<>(categoryService.getAllCategories(), HttpStatus.OK);
