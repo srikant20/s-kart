@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -31,21 +30,13 @@ public class CategoryController {
 
     @DeleteMapping("/admin/categories/{categoryId}")
     public ResponseEntity<String> deleteCategory(@PathVariable Long categoryId){
-        try{
-            String status = categoryService.deleteCategory(categoryId);
-            return new ResponseEntity<>(status, HttpStatus.OK);  //Way 1  , We have way 2 and way 3: return ResponseEntity.OK(status); another way is : return ResponseEntity.status(HttpStatus.OK).body(status);
-        }catch(ResponseStatusException e){
-            return new ResponseEntity<>(e.getReason(), e.getStatusCode());
-        }
+        String status = categoryService.deleteCategory(categoryId);
+        return new ResponseEntity<>(status, HttpStatus.OK);  //Way 1  , We have way 2 and way 3: return ResponseEntity.OK(status); another way is : return ResponseEntity.status(HttpStatus.OK).body(status);
     }
 
     @PutMapping("/admin/categories/{categoryId}")
-    public ResponseEntity<String> updateCategory(@RequestBody Category category, @PathVariable Long categoryId){
-        try{
-            Category savedCategory = categoryService.updateCategory(category, categoryId);
-            return new ResponseEntity<>("Category with Category Id: "+categoryId+" successfully updated!" , HttpStatus.OK);
-        }catch(ResponseStatusException e){
-            return new ResponseEntity<>(e.getReason(), e.getStatusCode());
-        }
+    public ResponseEntity<String> updateCategory(@Valid @RequestBody Category category, @PathVariable Long categoryId){
+        categoryService.updateCategory(category, categoryId);
+        return new ResponseEntity<>("Category with Category Id: "+categoryId+" successfully updated!" , HttpStatus.OK);
     }
 }
