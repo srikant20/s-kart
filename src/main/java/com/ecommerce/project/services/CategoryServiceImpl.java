@@ -16,8 +16,6 @@ import java.util.List;
 @Service
 public class CategoryServiceImpl implements CategoryService {
 
-    private List<Category> categories = new ArrayList<>();
-
     @Autowired
     private CategoryRepository categoryRepository;
 
@@ -41,11 +39,13 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public void createCategory(Category category) {
-        Category savedCategory = categoryRepository.findByCategoryName(category.getCategoryName());
-        if(savedCategory != null)
+    public CategoryDTO createCategory(CategoryDTO categoryDTO) {
+        Category category = modelMapper.map(categoryDTO, Category.class);
+        Category categoryFromDB = categoryRepository.findByCategoryName(category.getCategoryName());
+        if(categoryFromDB != null)
             throw new APIException("Category "+category.getCategoryName()+" already exists.!!");
-        categoryRepository.save(category);
+        Category savedCategory = categoryRepository.save(category);
+        return modelMapper.map(savedCategory, CategoryDTO.class);
     }
 
     @Override
