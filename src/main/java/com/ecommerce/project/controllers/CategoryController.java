@@ -1,6 +1,5 @@
 package com.ecommerce.project.controllers;
 
-import com.ecommerce.project.models.Category;
 import com.ecommerce.project.payloads.CategoryDTO;
 import com.ecommerce.project.payloads.CategoryResponse;
 import com.ecommerce.project.services.CategoryService;
@@ -9,8 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api")
@@ -30,9 +27,9 @@ public class CategoryController {
     }
 
     @DeleteMapping("/admin/categories/{categoryId}")
-    public ResponseEntity<String> deleteCategory(@PathVariable Long categoryId){
-        String status = categoryService.deleteCategory(categoryId);
-        return new ResponseEntity<>(status, HttpStatus.OK);  //Way 1  , We have way 2 and way 3: return ResponseEntity.OK(status); another way is : return ResponseEntity.status(HttpStatus.OK).body(status);
+    public ResponseEntity<CategoryDTO> deleteCategory(@PathVariable Long categoryId){
+        CategoryDTO deletedCategory = categoryService.deleteCategory(categoryId);
+        return new ResponseEntity<>(deletedCategory, HttpStatus.OK);  //Way 1  , We have way 2 and way 3: return ResponseEntity.OK(status); another way is : return ResponseEntity.status(HttpStatus.OK).body(status);
     }
 
     @PutMapping("/admin/categories/{categoryId}")
