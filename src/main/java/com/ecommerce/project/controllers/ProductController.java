@@ -17,10 +17,10 @@ public class ProductController {
     ProductService productService;
 
     @PostMapping("/admin/categories/{categoryId}/product")
-    public ResponseEntity<ProductDTO> addProduct(@RequestBody Product product,
+    public ResponseEntity<ProductDTO> addProduct(@RequestBody ProductDTO productDTO,
                                                  @PathVariable Long categoryId){
-        ProductDTO productDTO = productService.addProduct(product, categoryId);
-        return new ResponseEntity<>(productDTO, HttpStatus.CREATED);
+        ProductDTO addProductDTO = productService.addProduct(productDTO, categoryId);
+        return new ResponseEntity<>(addProductDTO, HttpStatus.CREATED);
     }
 
     @GetMapping("/public/products")
@@ -46,17 +46,17 @@ public class ProductController {
     }
 
     @PutMapping("/admin/product/{productId}")
-    public ResponseEntity<ProductDTO> updateProduct(@RequestBody Product product ,
+    public ResponseEntity<ProductDTO> updateProduct(@RequestBody ProductDTO productDTO ,
                                                     @PathVariable Long productId){
-        ProductDTO updatedProductDTO = productService.updateProduct(productId, product);
+        ProductDTO updatedProductDTO = productService.updateProduct(productId, productDTO);
         return new ResponseEntity<>(updatedProductDTO, HttpStatus.ACCEPTED);
     }
 
     @DeleteMapping("/admin/product/{productId}")
     public ResponseEntity<ProductDTO> deleteProduct(@PathVariable Long productId){
-        ProductDTO productDTO = productService.deleteProduct(productId);
+        ProductDTO deletedProduct = productService.deleteProduct(productId);
 
-        return new ResponseEntity<>(productDTO, HttpStatus.ACCEPTED);
+        return new ResponseEntity<>(deletedProduct, HttpStatus.ACCEPTED);
 
     }
 
