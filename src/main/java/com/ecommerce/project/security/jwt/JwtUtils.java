@@ -25,13 +25,13 @@ public class JwtUtils {
     @Value("${spring.app.jwtSecret}")
     private String jwtSecret;
 
-    @Value("${spring.app.jwtExpirationsMs}")
+    @Value("${spring.app.jwtExpirationMs}")
     private int jwtExpirationMs;
 
     //Getting JWT from Header
     public String getJwtFromHeader(HttpServletRequest request){
         String bearerToken = request.getHeader("Authorization");
-        logger.debug("Authorization Header: {}",bearerToken);
+        logger.debug("Authorization Header: {}", bearerToken);
         if(bearerToken != null && bearerToken.startsWith("Bearer ")){
             return bearerToken.substring(7);  //It Will remove bearer prefix
         }
@@ -51,8 +51,10 @@ public class JwtUtils {
     public String getUserNameFromJWTToken(String token){
         return Jwts.parser()
                 .verifyWith((SecretKey) key())
-                .build().parseEncryptedClaims(token)
-                .getPayload().getSubject();
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getSubject();
     }
     //Generate Signing Key
     public Key key(){

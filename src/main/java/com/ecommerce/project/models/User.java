@@ -39,7 +39,7 @@ public class User {
     private String email;
 
     @NotBlank
-    @Size(max = 20)
+    @Size(min=6, max = 120)
     @Column(name = "password")
     private String password;
 
