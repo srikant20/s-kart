@@ -48,6 +48,7 @@ public class Address {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
+    @ToString.Exclude
     private User user;
 
     public Address(String street, String buildingName, String city, String state, String country, String pincode) {

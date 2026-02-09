@@ -15,6 +15,7 @@ import java.util.Set;
 @Entity
 @Data
 @NoArgsConstructor
+@ToString
 @Table(name = "users",
        uniqueConstraints = {
             @UniqueConstraint(columnNames = "username"),
@@ -51,6 +52,7 @@ public class User {
 
     @Getter
     @Setter
+    @ToString.Exclude
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE},
             fetch = FetchType.EAGER)
     @JoinTable(name = "user_role",
@@ -60,6 +62,7 @@ public class User {
 
     @Setter
     @Getter
+    @ToString.Exclude
     @OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
 //    @JoinTable(name = "user_address",
 //       joinColumns = @JoinColumn(name = "user_id"),

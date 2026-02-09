@@ -7,12 +7,17 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 @Component
 public class AuthUtil {
 
     @Autowired
     UserRepository userRepository;
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthUtil.class);
 
     public String loggedInEmail(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -35,6 +40,7 @@ public class AuthUtil {
 
         User user = userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + authentication.getName()));
+        logger.info("Fetched User: {}", user);
         return user;
     }
 }

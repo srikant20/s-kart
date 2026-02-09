@@ -20,6 +20,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,23 +45,7 @@ public class CartServiceImpl implements CartService{
     @Autowired
     AuthUtil authUtil;
 
-    @Override
-    public List<CartDTO> getAllCarts() {
-        List<Cart> carts = cartRepository.findAll();
-        if(carts.isEmpty()){
-            throw new APIException("Currently, cart is empty!");
-        }
-        List<CartDTO> cartDTOs = carts.stream()
-                .map(cart -> {
-                    CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
-                    List<ProductDTO> productDTOS = cart.getCartItems().stream()
-                            .map(p -> modelMapper.map(p.getProduct(), ProductDTO.class))
-                            .collect(Collectors.toList());
-                    cartDTO.setProducts(productDTOS);
-                    return cartDTO;
-                }).collect(Collectors.toList());
-        return cartDTOs;
-    }
+    private static final Logger logger = LoggerFactory.getLogger(CartServiceImpl.class);
 
     @Override
     public CartDTO addProductToCart(Long productId, Integer quantity) {
@@ -73,6 +59,8 @@ public class CartServiceImpl implements CartService{
         CartItem cartItem = cartItemRepository.findCartItemByProductIdAndCartId(
                 cart.getCartId(),  productId
         );
+        logger.info("Fetched Product: {}", product);
+        logger.info("Fetched CartItem: {}", cartItem);
 
         if (cartItem != null) {
             throw new APIException("Product " + product.getProductName() + " already exists in the cart!");
@@ -81,9 +69,9 @@ public class CartServiceImpl implements CartService{
         if(product.getQuantity() == 0){
             throw new APIException(product.getProductName()+ " is not available.");
         }
-        if(product.getQuantity() < quantity){
-            throw new APIException("Please, make an order of the "+product.getProductName()+
-                    " less than or equal to quantity "+ product.getQuantity()+".");
+        if (product.getQuantity() < quantity) {
+            throw new APIException("Please order ≤ " + product.getQuantity() + " of " +
+                    product.getProductName() + ".");
         }
 
         CartItem newCartItem = new CartItem();
@@ -93,7 +81,12 @@ public class CartServiceImpl implements CartService{
         newCartItem.setQuantity(quantity);
         newCartItem.setDiscount(product.getDiscount());
         newCartItem.setProductPrice(product.getSpecialPrice());
+
+        // This is the critical part!
+        cart.addCartItem(newCartItem);   // adds to list + sets back-reference
+
         //Create cart item
+        logger.info("Fetched(APTC) New Cart Items: {}", newCartItem);
         cartItemRepository.save(newCartItem);
 
         product.setQuantity(product.getQuantity());
@@ -105,6 +98,7 @@ public class CartServiceImpl implements CartService{
         CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
 
         List<CartItem> cartItems = cart.getCartItems();
+        logger.info("CartItems List: {}",cartItems);
 
         Stream<ProductDTO> productDTOStream = cartItems.stream().map(item -> {
                 ProductDTO map = modelMapper.map(item.getProduct(), ProductDTO.class);
@@ -114,6 +108,28 @@ public class CartServiceImpl implements CartService{
         cartDTO.setProducts(productDTOStream.toList());
 
         return cartDTO;
+    }
+
+    @Override
+    public List<CartDTO> getAllCarts() {
+        List<Cart> carts = cartRepository.findAll();
+        if(carts.isEmpty()){
+            throw new APIException("Currently, cart is empty!");
+        }
+        List<CartDTO> cartDTOs = carts.stream()
+                .map(cart -> {
+                    CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
+                    List<ProductDTO> productDTOS = cart.getCartItems().stream()
+                            .map(cartItem -> {
+                                ProductDTO productDTO = modelMapper.map(cartItem.getProduct(), ProductDTO.class);
+                                productDTO.setQuantity(cartItem.getQuantity());
+                                return productDTO;
+                            }).collect(Collectors.toList());
+
+                    cartDTO.setProducts(productDTOS);
+                    return cartDTO;
+                }).collect(Collectors.toList());
+        return cartDTOs;
     }
 
     @Override
@@ -139,6 +155,7 @@ public class CartServiceImpl implements CartService{
         String email = authUtil.loggedInEmail();
         Cart userCart = cartRepository.findCartByEmail(email);
         Long cartId = userCart.getCartId();
+
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cart", "cartId", cartId));
         Product product = productRepository.findById(productId)
@@ -151,10 +168,10 @@ public class CartServiceImpl implements CartService{
             throw new APIException("Please, make an order of the "+product.getProductName()+
                     " less than or equal to quantity "+ product.getQuantity()+".");
         }
-
         CartItem cartItem = cartItemRepository.findCartItemByProductIdAndCartId(
-                cart.getCartId(),  productId
+                cartId,  productId
         );
+
 
         if(cartItem == null){
             throw new APIException("Product "+ product.getProductName()+" not available in the cart!");
@@ -166,11 +183,16 @@ public class CartServiceImpl implements CartService{
             throw new APIException("The resulting quantity cannot be negative.");
         }
 
+        if(newQuantity > product.getQuantity()){
+            throw new APIException("Please, make an order of the "+product.getProductName()+
+                    " less than or equal to quantity "+ product.getQuantity()+".");
+        }
+
         if(newQuantity == 0){
             deleteProductFromCart(cartId, productId);
         }else{
             cartItem.setProductPrice(product.getSpecialPrice());
-            cartItem.setQuantity(product.getQuantity() + quantity);
+            cartItem.setQuantity(cartItem.getQuantity() + quantity);
             cartItem.setDiscount(product.getDiscount());
             cart.setTotalPrice(cart.getTotalPrice() + (cartItem.getProductPrice() * quantity));
             cartRepository.save(cart);
@@ -187,13 +209,13 @@ public class CartServiceImpl implements CartService{
         Stream<ProductDTO> productStream = cartItems.stream()
                 .map(item -> {
                     ProductDTO productDTO = modelMapper.map(item.getProduct(), ProductDTO.class);
+                    productDTO.setQuantity(item.getQuantity());
                     return productDTO;
                 });
         cartDTO.setProducts(productStream.toList());
         return cartDTO;
     }
 
-    @Transactional
     @Override
     public String deleteProductFromCart(Long cartId, Long productId) {
         Cart cart = cartRepository.findById(cartId)
@@ -207,6 +229,7 @@ public class CartServiceImpl implements CartService{
         return "Product: "+ cartItem.getProduct().getProductName()+" successfully removed from cart.!";
     }
 
+    @Transactional
     @Override
     public void updateProductInCarts(Long cartId, Long productId) {
         Cart cart = cartRepository.findById(cartId)
@@ -230,6 +253,7 @@ public class CartServiceImpl implements CartService{
 
     private Cart createCart(){
 
+        logger.info("Fetched LoggedInEmail: {}", authUtil.loggedInEmail());
         Cart userCart = cartRepository.findCartByEmail(authUtil.loggedInEmail());
         if(userCart != null){
             return userCart;
@@ -240,6 +264,7 @@ public class CartServiceImpl implements CartService{
         cart.setUser(authUtil.loggedInUser());
 
         Cart newCart = cartRepository.save(cart);
+        logger.info("Fetched New Cart: {}", newCart);
         return newCart;
     }
 

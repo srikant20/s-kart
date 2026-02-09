@@ -5,6 +5,8 @@ import com.ecommerce.project.models.CartItem;
 import com.ecommerce.project.repositories.CartRepository;
 import com.ecommerce.project.services.CartService;
 import com.ecommerce.project.utils.AuthUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,10 +28,13 @@ public class CartController {
     @Autowired
     private CartService cartService;
 
+    private static final Logger logger = LoggerFactory.getLogger(CartController.class);
+
     @PostMapping("/carts/products/{productId}/quantity/{quantity}")
     public ResponseEntity<CartDTO> addProductToCart(@PathVariable Long productId,
-                                                   @PathVariable Integer quantity){
+                                                    @PathVariable Integer quantity){
         CartDTO cartDTO = cartService.addProductToCart(productId, quantity);
+        logger.info("Fetched CartDTO - Controller: {}", cartDTO);
         return new ResponseEntity<CartDTO>(cartDTO, HttpStatus.CREATED);
     }
 
@@ -51,7 +56,7 @@ public class CartController {
     public ResponseEntity<CartDTO> updateCartProduct(@PathVariable Long productId,
                                                      @PathVariable String operation){
         CartDTO cartDTO = cartService.updateProductQuantityInCart(productId,
-                operation.equalsIgnoreCase("delete")? -1 : 1);
+                operation.equalsIgnoreCase("delete") ? -1 : 1);
         return new ResponseEntity<CartDTO>(cartDTO, HttpStatus.OK);
     }
 
