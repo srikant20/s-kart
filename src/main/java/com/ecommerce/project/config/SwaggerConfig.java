@@ -2,6 +2,7 @@ package com.ecommerce.project.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
@@ -22,6 +23,10 @@ public class SwaggerConfig {
                 .addList("Bearer Authentication");
 
         return new OpenAPI()
+                .info(new Info()
+                        .title("Spring Boot eCommerce API - SKART")
+                        .version("1.0")
+                        .description("This is a Spring Boot Project for eCommerce."))
                 .components(new Components()
                         .addSecuritySchemes("Bearer Authentication", bearerScheme))
                 .addSecurityItem(bearerRequirement);
